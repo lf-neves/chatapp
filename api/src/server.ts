@@ -3,6 +3,7 @@ import { Server } from "socket.io";
 import cors from "cors";
 import http from "http";
 import session from "express-session";
+import { addUser } from "./users";
 
 const app = express();
 const httpServer = http.createServer(app);
@@ -33,7 +34,14 @@ const wrap = (middleware) => (socket, next) =>
 io.use(wrap(sessionMiddleware));
 
 io.on("connection", (socket) => {
-  socket.on("sendMessage", (message, callback) => {
-    socket.emit("message", { user: socket.id, text: message });
+  addUser({ id: socket.id, name: "test", room: "1" });
+
+  socket.on("sendMessage", (room, username, message, callback) => {
+    console.log(
+      `Received message: ${message} from ${username} to room: ${room}`
+    );
+
+    socket.join(room);
+    io.to(room).emit("message", { user: username, text: message });
   });
 });
